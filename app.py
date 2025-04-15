@@ -311,7 +311,7 @@ elif st.session_state.game_started and not st.session_state.game_over and not st
         st.write(f"### {st.session_state.message}")
     
     # 아이템 목록 표시
-    if st.session_state.items:
+    if len(st.session_state.items) > 0:
         st.write("## 보유 아이템")
         for i, item in enumerate(st.session_state.items):
             st.button(f"{item} 사용", key=f"item_{i}", on_click=use_item, args=(i,))
