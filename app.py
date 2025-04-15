@@ -28,6 +28,7 @@ def select_character(character):
     st.session_state.floor = 1
     st.session_state.items = []  # 아이템 초기화
     st.session_state.ultimate_skill_used = False  # 궁극기 사용 여부 초기화
+    st.session_state.ultimate_skill_active = False  # 궁극기 활성화 초기화
     
     if character == "전사":
         st.session_state.hp = 150
@@ -60,6 +61,11 @@ def setup_door_probabilities():
         st.session_state.good_door = "left"
     else:
         st.session_state.good_door = "right"
+
+# 마법사 궁극기 활성화 함수
+def activate_mage_ultimate():
+    st.session_state.ultimate_skill_used = True
+    st.session_state.message = "🔮 궁극기 발동! 다음 선택의 성공 확률이 100% 정확하게 보입니다!"
 
 # 문 선택 처리 함수
 def choose_door(door):
@@ -317,13 +323,9 @@ elif st.session_state.game_started and not st.session_state.game_over and not st
             st.button("궁극기: 함정 무시", on_click=activate_ultimate)
         elif st.session_state.character == "도적":
             st.button("궁극기: 100% 성공", on_click=activate_ultimate)
-        elif st.session_state.character == "마법사" and not st.session_state.ultimate_skill_used:
+        elif st.session_state.character == "마법사":
             # 마법사 궁극기는 즉시 발동 (100% 확률 확인)
-            st.button("궁극기: 100% 확률 확인", on_click=lambda: 
-                      st.session_state.update({
-                          'ultimate_skill_used': True,
-                          'message': "🔮 궁극기 발동! 다음 선택의 성공 확률이 100% 정확하게 보입니다!"
-                      }))
+            st.button("궁극기: 100% 확률 확인", on_click=activate_mage_ultimate)
     
     # 이벤트 활성화 확인
     if st.session_state.event_active:
