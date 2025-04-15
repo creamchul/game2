@@ -18,6 +18,7 @@ if 'game_started' not in st.session_state:
     st.session_state.ultimate_skill_used = False  # 궁극기 사용 여부
     st.session_state.event_active = False  # 이벤트 활성화 여부
     st.session_state.current_event = None  # 현재 이벤트
+    st.session_state.ultimate_skill_active = False
 
 # 캐릭터 선택 함수
 def select_character(character):
