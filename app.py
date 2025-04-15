@@ -253,6 +253,7 @@ def reset_game():
     st.session_state.items = []
     st.session_state.ultimate_skill_used = False
     st.session_state.event_active = False
+    st.session_state.ultimate_skill_active = False
 
 # UI 구성
 st.title("텍스트 기반 로그라이크 던전 게임")
