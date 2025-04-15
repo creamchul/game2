@@ -13,25 +13,29 @@ DEFAULT_GOLD_THIEF = 30
 DEFAULT_GOLD_MAGE = 10
 
 # 세션 상태 초기화
-if 'initialized' not in st.session_state:
-    st.session_state.initialized = True
-    st.session_state.game_started = False
-    st.session_state.character_selected = False
-    st.session_state.floor = 0
-    st.session_state.hp = 0
-    st.session_state.luck = 0
-    st.session_state.gold = 0
-    st.session_state.character = None
-    st.session_state.game_over = False
-    st.session_state.game_complete = False
-    st.session_state.message = ""
-    st.session_state.door_probs = {"left": 0.5, "right": 0.5}
-    st.session_state.items = []
-    st.session_state.ultimate_skill_used = False
-    st.session_state.event_active = False
-    st.session_state.current_event = None
-    st.session_state.ultimate_skill_active = False
-    st.session_state.good_door = "left"
+def init_session_state():
+    if 'initialized' not in st.session_state:
+        st.session_state.initialized = True
+        st.session_state.game_started = False
+        st.session_state.character_selected = False
+        st.session_state.floor = 0
+        st.session_state.hp = 0
+        st.session_state.luck = 0
+        st.session_state.gold = 0
+        st.session_state.character = None
+        st.session_state.game_over = False
+        st.session_state.game_complete = False
+        st.session_state.message = ""
+        st.session_state.door_probs = {"left": 0.5, "right": 0.5}
+        st.session_state.items_list = []  # 이름 변경
+        st.session_state.ultimate_skill_used = False
+        st.session_state.event_active = False
+        st.session_state.current_event = None
+        st.session_state.ultimate_skill_active = False
+        st.session_state.good_door = "left"
+
+# 초기화 실행
+init_session_state()
 
 # 캐릭터 선택 함수
 def select_character(character):
@@ -39,7 +43,7 @@ def select_character(character):
     st.session_state.character = character
     st.session_state.game_started = True
     st.session_state.floor = 1
-    st.session_state.items = []
+    st.session_state.items_list = []  # 이름 변경
     st.session_state.ultimate_skill_used = False
     st.session_state.ultimate_skill_active = False
     
@@ -168,6 +172,12 @@ def trigger_random_event():
     elif event == "함정 방":
         st.session_state.event_description = "이 방은 함정으로 가득한 것 같습니다. 조심스럽게 통과하시겠습니까?"
 
+# 아이템 추가 함수
+def add_item(item_name):
+    if 'items_list' not in st.session_state:
+        st.session_state.items_list = []
+    st.session_state.items_list.append(item_name)
+
 # 이벤트 선택 처리
 def handle_event_choice(choice):
     event = st.session_state.current_event
@@ -177,7 +187,7 @@ def handle_event_choice(choice):
         if event == "수상한 상자":
             if random.random() < 0.6:  # 60% 확률로 좋은 결과
                 item = random.choice(["회복 물약", "사다리", "운 강화 부적"])
-                st.session_state.items.append(item)
+                add_item(item)  # 아이템 추가 함수 사용
                 result = f"🎁 상자에서 {item}을(를) 발견했습니다!"
             else:
                 damage = random.randint(5, 15)
@@ -188,7 +198,7 @@ def handle_event_choice(choice):
             if st.session_state.gold >= 20:
                 st.session_state.gold -= 20
                 item = random.choice(["회복 물약", "사다리", "운 강화 부적"])
-                st.session_state.items.append(item)
+                add_item(item)  # 아이템 추가 함수 사용
                 result = f"🛒 {item}을(를) 구매했습니다. 금화 -20"
             else:
                 result = "💰 금화가 부족합니다. 상인이 실망하며 떠났습니다."
@@ -206,7 +216,7 @@ def handle_event_choice(choice):
         elif event == "함정 방":
             if random.random() < 0.5:  # 50% 성공 확률
                 item = random.choice(["회복 물약", "사다리", "운 강화 부적"])
-                st.session_state.items.append(item)
+                add_item(item)  # 아이템 추가 함수 사용
                 result = f"🏃 함정을 피해 무사히 통과했습니다! {item}을(를) 발견했습니다!"
             else:
                 damage = random.randint(10, 20)
@@ -229,10 +239,10 @@ def handle_event_choice(choice):
 
 # 아이템 사용 함수
 def use_item(item_idx):
-    if not isinstance(st.session_state.items, list) or item_idx >= len(st.session_state.items):
+    if 'items_list' not in st.session_state or not isinstance(st.session_state.items_list, list) or item_idx >= len(st.session_state.items_list):
         return
     
-    item = st.session_state.items[item_idx]
+    item = st.session_state.items_list[item_idx]
     
     if item == "회복 물약":
         heal = random.randint(30, 50)
@@ -250,7 +260,7 @@ def use_item(item_idx):
         st.session_state.message = f"🍀 운 강화 부적을 사용했습니다. 운 +{luck_boost}"
     
     # 아이템 제거
-    st.session_state.items.pop(item_idx)
+    st.session_state.items_list.pop(item_idx)
 
 # 궁극기 활성화 함수
 def activate_ultimate():
@@ -272,7 +282,7 @@ def reset_game():
     st.session_state.game_over = False
     st.session_state.game_complete = False
     st.session_state.message = ""
-    st.session_state.items = []
+    st.session_state.items_list = []  # 이름 변경
     st.session_state.ultimate_skill_used = False
     st.session_state.event_active = False
     st.session_state.ultimate_skill_active = False
@@ -333,10 +343,9 @@ elif st.session_state.game_started and not st.session_state.game_over and not st
         st.write(f"### {st.session_state.message}")
     
     # 아이템 목록 표시
-    items = st.session_state.items
-    if isinstance(items, list) and len(items) > 0:
+    if 'items_list' in st.session_state and isinstance(st.session_state.items_list, list) and len(st.session_state.items_list) > 0:
         st.write("## 보유 아이템")
-        for i, item in enumerate(items):
+        for i, item in enumerate(st.session_state.items_list):
             if st.button(f"{item} 사용", key=f"item_{i}"):
                 use_item(i)
                 st.experimental_rerun()
