@@ -1,5 +1,10 @@
 import streamlit as st
 import random
+from images import *
+from style import get_game_style
+
+# 스타일 적용
+st.markdown(get_game_style(), unsafe_allow_html=True)
 
 # 기본 설정 및 상수
 DEFAULT_HP_WARRIOR = 150
@@ -287,90 +292,137 @@ def reset_game():
     st.session_state.event_active = False
     st.session_state.ultimate_skill_active = False
 
+# 캐릭터 이미지 표시 함수
+def display_character_image(character):
+    if character == "전사":
+        return WARRIOR_IMG
+    elif character == "도적":
+        return THIEF_IMG
+    elif character == "마법사":
+        return MAGE_IMG
+    return ""
+
 # UI 구성
-st.title("텍스트 기반 로그라이크 던전 게임")
+st.markdown('<h1 class="main-title">텍스트 기반 로그라이크 던전 게임</h1>', unsafe_allow_html=True)
 
 # 게임 시작 전 캐릭터 선택 화면
 if not st.session_state.character_selected:
-    st.write("던전에 입장할 캐릭터를 선택하세요:")
+    st.markdown('<p style="text-align:center; font-size:1.2rem;">던전에 입장할 캐릭터를 선택하세요:</p>', unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.write("### 전사")
+        st.markdown('<div class="character-card">', unsafe_allow_html=True)
+        st.markdown('<h3 class="character-title">전사</h3>', unsafe_allow_html=True)
+        st.markdown(f'<pre class="ascii-art">{WARRIOR_IMG}</pre>', unsafe_allow_html=True)
+        st.markdown('<div class="character-stats">', unsafe_allow_html=True)
         st.write("- 체력: 150")
         st.write("- 운: 5")
         st.write("- 금화: 0")
         st.write("- 궁극기: 함정 무시 (1회)")
+        st.markdown('</div>', unsafe_allow_html=True)
         if st.button("전사 선택", key="warrior_btn"):
             select_character("전사")
             st.experimental_rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
     
     with col2:
-        st.write("### 도적")
+        st.markdown('<div class="character-card">', unsafe_allow_html=True)
+        st.markdown('<h3 class="character-title">도적</h3>', unsafe_allow_html=True)
+        st.markdown(f'<pre class="ascii-art">{THIEF_IMG}</pre>', unsafe_allow_html=True)
+        st.markdown('<div class="character-stats">', unsafe_allow_html=True)
         st.write("- 체력: 100")
         st.write("- 운: 20")
         st.write("- 금화: 30")
         st.write("- 궁극기: 100% 성공 (1회)")
+        st.markdown('</div>', unsafe_allow_html=True)
         if st.button("도적 선택", key="thief_btn"):
             select_character("도적")
             st.experimental_rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
     
     with col3:
-        st.write("### 마법사")
+        st.markdown('<div class="character-card">', unsafe_allow_html=True)
+        st.markdown('<h3 class="character-title">마법사</h3>', unsafe_allow_html=True)
+        st.markdown(f'<pre class="ascii-art">{MAGE_IMG}</pre>', unsafe_allow_html=True)
+        st.markdown('<div class="character-stats">', unsafe_allow_html=True)
         st.write("- 체력: 80")
         st.write("- 운: 10")
         st.write("- 금화: 10")
         st.write("- 특성: 문의 확률을 볼 수 있음")
         st.write("- 궁극기: 100% 확률 확인 (1회)")
+        st.markdown('</div>', unsafe_allow_html=True)
         if st.button("마법사 선택", key="mage_btn"):
             select_character("마법사")
             st.experimental_rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # 게임 진행 중이면 게임 화면 표시
 elif st.session_state.game_started and not st.session_state.game_over and not st.session_state.game_complete:
-    st.write(f"### {st.session_state.floor}층")
+    # 층수 표시
+    st.markdown(f'<div class="floor-display">{st.session_state.floor}층</div>', unsafe_allow_html=True)
     
     # 플레이어 정보 표시
-    st.write(f"## 플레이어 정보: {st.session_state.character}")
-    col1, col2, col3 = st.columns(3)
-    col1.metric("체력", st.session_state.hp)
-    col2.metric("운", st.session_state.luck)
-    col3.metric("금화", st.session_state.gold)
+    st.markdown('<div class="player-stats">', unsafe_allow_html=True)
+    st.markdown(f'<h2>플레이어 정보: {st.session_state.character}</h2>', unsafe_allow_html=True)
+    
+    # 캐릭터 이미지와 정보 함께 표시
+    col_img, col_stats = st.columns([1, 2])
+    
+    with col_img:
+        st.markdown(f'<pre class="ascii-art">{display_character_image(st.session_state.character)}</pre>', unsafe_allow_html=True)
+    
+    with col_stats:
+        col1, col2, col3 = st.columns(3)
+        col1.metric("체력", st.session_state.hp)
+        col2.metric("운", st.session_state.luck)
+        col3.metric("금화", st.session_state.gold)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
     
     # 메시지 표시
     if st.session_state.message:
-        st.write(f"### {st.session_state.message}")
+        st.markdown(f'<div class="message-box">{st.session_state.message}</div>', unsafe_allow_html=True)
     
     # 아이템 목록 표시
     if 'items_list' in st.session_state and isinstance(st.session_state.items_list, list) and len(st.session_state.items_list) > 0:
-        st.write("## 보유 아이템")
+        st.markdown('<h2>보유 아이템</h2>', unsafe_allow_html=True)
+        cols = st.columns(3)
         for i, item in enumerate(st.session_state.items_list):
-            if st.button(f"{item} 사용", key=f"item_{i}"):
-                use_item(i)
-                st.experimental_rerun()
+            col_idx = i % 3
+            with cols[col_idx]:
+                emoji = ITEMS.get(item, "🎁")
+                if st.button(f"{emoji} {item} 사용", key=f"item_{i}"):
+                    use_item(i)
+                    st.experimental_rerun()
     
     # 궁극기 버튼
     if not st.session_state.ultimate_skill_used:
-        st.write("## 궁극기")
+        st.markdown('<h2>궁극기</h2>', unsafe_allow_html=True)
         if st.session_state.character == "전사":
-            if st.button("궁극기: 함정 무시", key="warrior_ult"):
+            if st.button("🛡️ 궁극기: 함정 무시", key="warrior_ult"):
                 activate_ultimate()
                 st.experimental_rerun()
         elif st.session_state.character == "도적":
-            if st.button("궁극기: 100% 성공", key="thief_ult"):
+            if st.button("🎯 궁극기: 100% 성공", key="thief_ult"):
                 activate_ultimate()
                 st.experimental_rerun()
         elif st.session_state.character == "마법사":
             # 마법사 궁극기는 즉시 발동 (100% 확률 확인)
-            if st.button("궁극기: 100% 확률 확인", key="mage_ult"):
+            if st.button("🔮 궁극기: 100% 확률 확인", key="mage_ult"):
                 activate_mage_ultimate()
                 st.experimental_rerun()
     
     # 이벤트 활성화 확인
     if st.session_state.event_active:
-        st.write(f"## 이벤트: {st.session_state.current_event}")
-        st.write(st.session_state.event_description)
+        event = st.session_state.current_event
+        emoji = EVENTS.get(event, "❓")
+        
+        st.markdown(f'<div class="event-box">', unsafe_allow_html=True)
+        st.markdown(f'<h2>{emoji} 이벤트: {event}</h2>', unsafe_allow_html=True)
+        st.markdown(f'<p>{st.session_state.event_description}</p>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+        
         col1, col2 = st.columns(2)
         with col1:
             if st.button("예", key="yes_btn"):
@@ -382,45 +434,57 @@ elif st.session_state.game_started and not st.session_state.game_over and not st
                 st.experimental_rerun()
     # 일반 게임 진행
     else:
-        st.write("## 두 개의 문이 보입니다. 어느 쪽을 선택하시겠습니까?")
+        st.markdown('<h2>두 개의 문이 보입니다. 어느 쪽을 선택하시겠습니까?</h2>', unsafe_allow_html=True)
         
         # 마법사인 경우 확률 표시
         if st.session_state.character == "마법사":
             # 궁극기 사용 중이면 100% 정확한 확률 표시
             if st.session_state.ultimate_skill_used and st.session_state.message == "🔮 궁극기 발동! 다음 선택의 성공 확률이 100% 정확하게 보입니다!":
-                st.write(f"왼쪽 문 정확한 성공 확률: {st.session_state.door_probs['left']*100:.2f}%")
-                st.write(f"오른쪽 문 정확한 성공 확률: {st.session_state.door_probs['right']*100:.2f}%")
+                st.info(f"왼쪽 문 정확한 성공 확률: {st.session_state.door_probs['left']*100:.2f}%")
+                st.info(f"오른쪽 문 정확한 성공 확률: {st.session_state.door_probs['right']*100:.2f}%")
                 # 메시지 초기화
                 st.session_state.message = "🔮 궁극기로 정확한 확률을 확인했습니다!"
             else:
-                st.write(f"왼쪽 문 성공 확률: {st.session_state.door_probs['left']*100:.0f}%")
-                st.write(f"오른쪽 문 성공 확률: {st.session_state.door_probs['right']*100:.0f}%")
+                st.info(f"왼쪽 문 성공 확률: {st.session_state.door_probs['left']*100:.0f}%")
+                st.info(f"오른쪽 문 성공 확률: {st.session_state.door_probs['right']*100:.0f}%")
         
         # 선택 버튼
         col1, col2 = st.columns(2)
         with col1:
+            st.markdown(f'<div class="door-box">', unsafe_allow_html=True)
+            st.markdown(f'<pre class="ascii-art">{LEFT_DOOR}</pre>', unsafe_allow_html=True)
             if st.button("왼쪽 문 선택", key="left_door"):
                 choose_door("left")
                 st.experimental_rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
         with col2:
+            st.markdown(f'<div class="door-box">', unsafe_allow_html=True)
+            st.markdown(f'<pre class="ascii-art">{RIGHT_DOOR}</pre>', unsafe_allow_html=True)
             if st.button("오른쪽 문 선택", key="right_door"):
                 choose_door("right")
                 st.experimental_rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
 # 게임 오버
 elif st.session_state.game_over:
-    st.write("# 게임 오버!")
-    st.write(f"## 당신은 {st.session_state.floor-1}층까지 도달했습니다.")
-    st.write(f"## 획득한 금화: {st.session_state.gold}")
+    st.markdown('<div class="game-over">', unsafe_allow_html=True)
+    st.markdown('<h1>게임 오버!</h1>', unsafe_allow_html=True)
+    st.markdown(f'<h2>당신은 {st.session_state.floor-1}층까지 도달했습니다.</h2>', unsafe_allow_html=True)
+    st.markdown(f'<h2>획득한 금화: {st.session_state.gold}</h2>', unsafe_allow_html=True)
     if st.button("다시 시작", key="restart_btn"):
         reset_game()
         st.experimental_rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # 게임 클리어
 elif st.session_state.game_complete:
-    st.write("# 축하합니다! 던전을 클리어했습니다!")
-    st.write(f"## 최종 체력: {st.session_state.hp}")
-    st.write(f"## 획득한 금화: {st.session_state.gold}")
+    st.markdown('<div class="game-complete">', unsafe_allow_html=True)
+    st.markdown('<h1>축하합니다! 던전을 클리어했습니다!</h1>', unsafe_allow_html=True)
+    st.markdown(f'<pre class="ascii-art">{BOSS_IMG}</pre>', unsafe_allow_html=True)
+    st.markdown('<p>보스를 물리치고 던전의 끝에 도달했습니다!</p>', unsafe_allow_html=True)
+    st.markdown(f'<h2>최종 체력: {st.session_state.hp}</h2>', unsafe_allow_html=True)
+    st.markdown(f'<h2>획득한 금화: {st.session_state.gold}</h2>', unsafe_allow_html=True)
     if st.button("다시 시작", key="clear_restart_btn"):
         reset_game()
-        st.experimental_rerun() 
+        st.experimental_rerun()
+    st.markdown('</div>', unsafe_allow_html=True) 
