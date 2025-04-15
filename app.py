@@ -1,8 +1,20 @@
 import streamlit as st
 import random
 
+# 기본 설정 및 상수
+DEFAULT_HP_WARRIOR = 150
+DEFAULT_HP_THIEF = 100
+DEFAULT_HP_MAGE = 80
+DEFAULT_LUCK_WARRIOR = 5
+DEFAULT_LUCK_THIEF = 20
+DEFAULT_LUCK_MAGE = 10
+DEFAULT_GOLD_WARRIOR = 0
+DEFAULT_GOLD_THIEF = 30
+DEFAULT_GOLD_MAGE = 10
+
 # 세션 상태 초기화
-if 'game_started' not in st.session_state:
+if 'initialized' not in st.session_state:
+    st.session_state.initialized = True
     st.session_state.game_started = False
     st.session_state.character_selected = False
     st.session_state.floor = 0
@@ -14,11 +26,12 @@ if 'game_started' not in st.session_state:
     st.session_state.game_complete = False
     st.session_state.message = ""
     st.session_state.door_probs = {"left": 0.5, "right": 0.5}
-    st.session_state.items = []  # 아이템 목록
-    st.session_state.ultimate_skill_used = False  # 궁극기 사용 여부
-    st.session_state.event_active = False  # 이벤트 활성화 여부
-    st.session_state.current_event = None  # 현재 이벤트
+    st.session_state.items = []
+    st.session_state.ultimate_skill_used = False
+    st.session_state.event_active = False
+    st.session_state.current_event = None
     st.session_state.ultimate_skill_active = False
+    st.session_state.good_door = "left"
 
 # 캐릭터 선택 함수
 def select_character(character):
@@ -26,22 +39,22 @@ def select_character(character):
     st.session_state.character = character
     st.session_state.game_started = True
     st.session_state.floor = 1
-    st.session_state.items = []  # 아이템 초기화
-    st.session_state.ultimate_skill_used = False  # 궁극기 사용 여부 초기화
-    st.session_state.ultimate_skill_active = False  # 궁극기 활성화 초기화
+    st.session_state.items = []
+    st.session_state.ultimate_skill_used = False
+    st.session_state.ultimate_skill_active = False
     
     if character == "전사":
-        st.session_state.hp = 150
-        st.session_state.luck = 5
-        st.session_state.gold = 0
+        st.session_state.hp = DEFAULT_HP_WARRIOR
+        st.session_state.luck = DEFAULT_LUCK_WARRIOR
+        st.session_state.gold = DEFAULT_GOLD_WARRIOR
     elif character == "도적":
-        st.session_state.hp = 100
-        st.session_state.luck = 20
-        st.session_state.gold = 30
+        st.session_state.hp = DEFAULT_HP_THIEF
+        st.session_state.luck = DEFAULT_LUCK_THIEF
+        st.session_state.gold = DEFAULT_GOLD_THIEF
     elif character == "마법사":
-        st.session_state.hp = 80
-        st.session_state.luck = 10
-        st.session_state.gold = 10
+        st.session_state.hp = DEFAULT_HP_MAGE
+        st.session_state.luck = DEFAULT_LUCK_MAGE
+        st.session_state.gold = DEFAULT_GOLD_MAGE
     
     # 첫 층의 문 확률 설정
     setup_door_probabilities()
@@ -75,12 +88,12 @@ def choose_door(door):
     probabilities = st.session_state.door_probs
     good_door = st.session_state.good_door
     
-    # 운 스탯 반영 (도적의 경우 운이 높아 확률 증가)
+    # 운 스탯 반영
     luck_bonus = st.session_state.luck / 100
+    success_chance = probabilities[door]
+    
     if door == good_door:
-        success_chance = probabilities[door] + luck_bonus
-    else:
-        success_chance = probabilities[door]  # 나쁜 문에는 운 보너스 미적용
+        success_chance += luck_bonus
     
     # 전사 궁극기: 함정 무시
     if st.session_state.character == "전사" and door != good_door and st.session_state.ultimate_skill_active:
@@ -215,8 +228,11 @@ def handle_event_choice(choice):
     setup_door_probabilities()
 
 # 아이템 사용 함수
-def use_item(item_index):
-    item = st.session_state.items[item_index]
+def use_item(item_idx):
+    if not isinstance(st.session_state.items, list) or item_idx >= len(st.session_state.items):
+        return
+    
+    item = st.session_state.items[item_idx]
     
     if item == "회복 물약":
         heal = random.randint(30, 50)
@@ -234,7 +250,7 @@ def use_item(item_index):
         st.session_state.message = f"🍀 운 강화 부적을 사용했습니다. 운 +{luck_boost}"
     
     # 아이템 제거
-    st.session_state.items.pop(item_index)
+    st.session_state.items.pop(item_idx)
 
 # 궁극기 활성화 함수
 def activate_ultimate():
@@ -276,7 +292,9 @@ if not st.session_state.character_selected:
         st.write("- 운: 5")
         st.write("- 금화: 0")
         st.write("- 궁극기: 함정 무시 (1회)")
-        st.button("전사 선택", on_click=select_character, args=("전사",))
+        if st.button("전사 선택", key="warrior_btn"):
+            select_character("전사")
+            st.experimental_rerun()
     
     with col2:
         st.write("### 도적")
@@ -284,7 +302,9 @@ if not st.session_state.character_selected:
         st.write("- 운: 20")
         st.write("- 금화: 30")
         st.write("- 궁극기: 100% 성공 (1회)")
-        st.button("도적 선택", on_click=select_character, args=("도적",))
+        if st.button("도적 선택", key="thief_btn"):
+            select_character("도적")
+            st.experimental_rerun()
     
     with col3:
         st.write("### 마법사")
@@ -293,7 +313,9 @@ if not st.session_state.character_selected:
         st.write("- 금화: 10")
         st.write("- 특성: 문의 확률을 볼 수 있음")
         st.write("- 궁극기: 100% 확률 확인 (1회)")
-        st.button("마법사 선택", on_click=select_character, args=("마법사",))
+        if st.button("마법사 선택", key="mage_btn"):
+            select_character("마법사")
+            st.experimental_rerun()
 
 # 게임 진행 중이면 게임 화면 표시
 elif st.session_state.game_started and not st.session_state.game_over and not st.session_state.game_complete:
@@ -311,21 +333,30 @@ elif st.session_state.game_started and not st.session_state.game_over and not st
         st.write(f"### {st.session_state.message}")
     
     # 아이템 목록 표시
-    if len(st.session_state.items) > 0:
+    items = st.session_state.items
+    if isinstance(items, list) and len(items) > 0:
         st.write("## 보유 아이템")
-        for i, item in enumerate(st.session_state.items):
-            st.button(f"{item} 사용", key=f"item_{i}", on_click=use_item, args=(i,))
+        for i, item in enumerate(items):
+            if st.button(f"{item} 사용", key=f"item_{i}"):
+                use_item(i)
+                st.experimental_rerun()
     
     # 궁극기 버튼
     if not st.session_state.ultimate_skill_used:
         st.write("## 궁극기")
         if st.session_state.character == "전사":
-            st.button("궁극기: 함정 무시", on_click=activate_ultimate)
+            if st.button("궁극기: 함정 무시", key="warrior_ult"):
+                activate_ultimate()
+                st.experimental_rerun()
         elif st.session_state.character == "도적":
-            st.button("궁극기: 100% 성공", on_click=activate_ultimate)
+            if st.button("궁극기: 100% 성공", key="thief_ult"):
+                activate_ultimate()
+                st.experimental_rerun()
         elif st.session_state.character == "마법사":
             # 마법사 궁극기는 즉시 발동 (100% 확률 확인)
-            st.button("궁극기: 100% 확률 확인", on_click=activate_mage_ultimate)
+            if st.button("궁극기: 100% 확률 확인", key="mage_ult"):
+                activate_mage_ultimate()
+                st.experimental_rerun()
     
     # 이벤트 활성화 확인
     if st.session_state.event_active:
@@ -333,9 +364,13 @@ elif st.session_state.game_started and not st.session_state.game_over and not st
         st.write(st.session_state.event_description)
         col1, col2 = st.columns(2)
         with col1:
-            st.button("예", on_click=handle_event_choice, args=("예",))
+            if st.button("예", key="yes_btn"):
+                handle_event_choice("예")
+                st.experimental_rerun()
         with col2:
-            st.button("아니오", on_click=handle_event_choice, args=("아니오",))
+            if st.button("아니오", key="no_btn"):
+                handle_event_choice("아니오")
+                st.experimental_rerun()
     # 일반 게임 진행
     else:
         st.write("## 두 개의 문이 보입니다. 어느 쪽을 선택하시겠습니까?")
@@ -355,20 +390,28 @@ elif st.session_state.game_started and not st.session_state.game_over and not st
         # 선택 버튼
         col1, col2 = st.columns(2)
         with col1:
-            st.button("왼쪽 문 선택", on_click=choose_door, args=("left",))
+            if st.button("왼쪽 문 선택", key="left_door"):
+                choose_door("left")
+                st.experimental_rerun()
         with col2:
-            st.button("오른쪽 문 선택", on_click=choose_door, args=("right",))
+            if st.button("오른쪽 문 선택", key="right_door"):
+                choose_door("right")
+                st.experimental_rerun()
 
 # 게임 오버
 elif st.session_state.game_over:
     st.write("# 게임 오버!")
     st.write(f"## 당신은 {st.session_state.floor-1}층까지 도달했습니다.")
     st.write(f"## 획득한 금화: {st.session_state.gold}")
-    st.button("다시 시작", on_click=reset_game)
+    if st.button("다시 시작", key="restart_btn"):
+        reset_game()
+        st.experimental_rerun()
 
 # 게임 클리어
 elif st.session_state.game_complete:
     st.write("# 축하합니다! 던전을 클리어했습니다!")
     st.write(f"## 최종 체력: {st.session_state.hp}")
     st.write(f"## 획득한 금화: {st.session_state.gold}")
-    st.button("다시 시작", on_click=reset_game) 
+    if st.button("다시 시작", key="clear_restart_btn"):
+        reset_game()
+        st.experimental_rerun() 
